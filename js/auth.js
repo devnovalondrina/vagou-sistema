@@ -2,8 +2,6 @@
 
 // URL da API (Google Apps Script)
 const API_URL = "https://script.google.com/macros/s/AKfycbwPJk8gyC3WNXfU8k7XiPqsZ6cEJlpuY7vnTsRkttDTkwGO9UsetmmQ5tISQyLUkhNlrA/exec";
-// Proxy CORS para contornar problemas de CORS
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
 // Objeto para gerenciar autenticação
 const auth = {
@@ -165,44 +163,35 @@ async function handleLogin(e) {
             password: password
         };
         
-        // Fazer requisição para a API usando o proxy CORS
-        const response = await fetch(CORS_PROXY + API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
-            },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Salvar dados do usuário e token
-            localStorage.setItem('userData', JSON.stringify(result.user));
-            localStorage.setItem('token', result.token);
-            
-            // Redirecionar para a página correta
-            switch (result.user.tipo) {
-                case 'admin':
-                    window.location.href = 'pages/admin.html';
-                    break;
-                case 'gestor':
-                    window.location.href = 'pages/gestor.html';
-                    break;
-                case 'responsavel':
-                    window.location.href = 'pages/responsavel.html';
-                    break;
-                default:
-                    window.location.href = 'pages/responsavel.html';
+        // Fazer requisição para a API usando iframe
+        postViaIframe(API_URL, data, function(result) {
+            if (result.success) {
+                // Salvar dados do usuário e token
+                localStorage.setItem('userData', JSON.stringify(result.user));
+                localStorage.setItem('token', result.token);
+                
+                // Redirecionar para a página correta
+                switch (result.user.tipo) {
+                    case 'admin':
+                        window.location.href = 'pages/admin.html';
+                        break;
+                    case 'gestor':
+                        window.location.href = 'pages/gestor.html';
+                        break;
+                    case 'responsavel':
+                        window.location.href = 'pages/responsavel.html';
+                        break;
+                    default:
+                        window.location.href = 'pages/responsavel.html';
+                }
+            } else {
+                alert(result.message || 'Erro ao fazer login. Tente novamente.');
+                
+                // Restaurar botão
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
             }
-        } else {
-            alert(result.message || 'Erro ao fazer login. Tente novamente.');
-            
-            // Restaurar botão
-            loginBtn.innerHTML = originalText;
-            loginBtn.disabled = false;
-        }
+        });
     } catch (error) {
         console.error('Erro ao fazer login:', error);
         alert('Erro de conexão. Tente novamente mais tarde.');
@@ -254,34 +243,25 @@ async function handleRegister(e) {
             tipo: 'responsavel' // Por padrão, novos usuários são responsáveis
         };
         
-        // Fazer requisição para a API usando o proxy CORS
-        const response = await fetch(CORS_PROXY + API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
-            },
-            body: JSON.stringify(data)
+        // Fazer requisição para a API usando iframe
+        postViaIframe(API_URL, data, function(result) {
+            if (result.success) {
+                alert('Cadastro realizado com sucesso! Faça login para continuar.');
+                
+                // Mostrar formulário de login
+                document.getElementById('registerContainer').classList.add('d-none');
+                document.getElementById('loginContainer').classList.remove('d-none');
+                
+                // Limpar formulário
+                document.getElementById('registerForm').reset();
+            } else {
+                alert(result.message || 'Erro ao fazer cadastro. Tente novamente.');
+            }
+            
+            // Restaurar botão
+            registerBtn.innerHTML = originalText;
+            registerBtn.disabled = false;
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert('Cadastro realizado com sucesso! Faça login para continuar.');
-            
-            // Mostrar formulário de login
-            document.getElementById('registerContainer').classList.add('d-none');
-            document.getElementById('loginContainer').classList.remove('d-none');
-            
-            // Limpar formulário
-            document.getElementById('registerForm').reset();
-        } else {
-            alert(result.message || 'Erro ao fazer cadastro. Tente novamente.');
-        }
-        
-        // Restaurar botão
-        registerBtn.innerHTML = originalText;
-        registerBtn.disabled = false;
     } catch (error) {
         console.error('Erro ao fazer cadastro:', error);
         alert('Erro de conexão. Tente novamente mais tarde.');
@@ -290,4 +270,80 @@ async function handleRegister(e) {
         registerBtn.innerHTML = originalText;
         registerBtn.disabled = false;
     }
+}
+
+// Função para fazer requisições JSONP (apenas GET)
+function jsonpRequest(url, params, callback) {
+    // Criar elemento script
+    const script = document.createElement('script');
+    
+    // Adicionar callback como parâmetro
+    params.callback = 'jsonpCallback_' + Math.floor(Math.random() * 1000000);
+    
+    // Definir callback global
+    window[params.callback] = function(data) {
+        callback(data);
+        document.body.removeChild(script);
+        delete window[params.callback];
+    };
+    
+    // Construir URL com parâmetros
+    const queryString = Object.keys(params)
+        .map(key => key + '=' + encodeURIComponent(params[key]))
+        .join('&');
+    
+    // Definir src e adicionar ao documento
+    script.src = url + '?' + queryString;
+    document.body.appendChild(script);
+}
+
+// Função para fazer requisições POST via iframe
+function postViaIframe(url, data, callback) {
+    // Criar um ID único para o iframe
+    const iframeId = 'iframe_' + Math.floor(Math.random() * 1000000);
+    const formId = 'form_' + Math.floor(Math.random() * 1000000);
+    
+    // Criar iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = iframeId;
+    iframe.name = iframeId;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    
+    // Criar formulário
+    const form = document.createElement('form');
+    form.id = formId;
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeId;
+    form.style.display = 'none';
+    
+    // Adicionar campo para os dados
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(data);
+    form.appendChild(input);
+    
+    document.body.appendChild(form);
+    
+    // Configurar evento de carregamento do iframe
+    iframe.onload = function() {
+        try {
+            // Tentar obter resposta do iframe
+            const iframeContent = iframe.contentWindow.document.body.innerText;
+            const response = JSON.parse(iframeContent);
+            callback(response);
+        } catch (error) {
+            console.error('Erro ao processar resposta:', error);
+            callback({ success: false, message: 'Erro de comunicação' });
+        }
+        
+        // Limpar
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+    };
+    
+    // Enviar formulário
+    form.submit();
 }
