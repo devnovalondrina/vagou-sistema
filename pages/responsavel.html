@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAGOU - Painel do Responsável</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">VAGOU</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home"></i> Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="novaInscricaoBtn"><i class="fas fa-plus-circle"></i> Nova Inscrição</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="minhasInscricoesBtn"><i class="fas fa-list"></i> Minhas Inscrições</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="me-3" id="userNameDisplay"></span>
+                    <button class="btn btn-outline-danger btn-sm" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <div class="container dashboard-container">
+        <!-- Boas-vindas -->
+        <div class="row mb-4" id="welcomeSection">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <h4 class="card-title">Bem-vindo(a) ao Sistema VAGOU</h4>
+                        <p class="card-text">
+                            Este sistema permite que você inscreva seus filhos em Centros Municipais de Educação Infantil (CMEIs).
+                            Utilize o menu acima para navegar entre as opções disponíveis.
+                        </p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                            <button class="btn btn-primary" id="welcomeNovaInscricaoBtn">
+                                <i class="fas fa-plus-circle"></i> Nova Inscrição
+                            </button>
+                            <button class="btn btn-outline-primary" id="welcomeMinhasInscricoesBtn">
+                                <i class="fas fa-list"></i> Minhas Inscrições
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Nova Inscrição -->
+        <div class="row mb-4 d-none" id="novaInscricaoSection">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plus-circle"></i> Nova Inscrição</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="inscricaoForm">
+                            <div class="alert alert-danger d-none" id="inscricaoError"></div>
+                            
+                            <!-- Etapas do formulário -->
+                            <div class="form-steps">
+                                <!-- Etapa 1: Dados da Criança -->
+                                <div class="step" id="step1">
+                                    <h5 class="mb-3">Dados da Criança</h5>
+                                    
+                                    <div class="mb-3">
+                                        <label for="nomeCrianca" class="form-label">Nome Completo</label>
+                                        <input type="text" class="form-control" id="nomeCrianca" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="dataNascimento" class="form-label">Data de Nascimento</label>
+                                        <input type="date" class="form-control" id="dataNascimento" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Sexo</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sexo" id="sexoM" value="M" required>
+                                            <label class="form-check-label" for="sexoM">Masculino</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sexo" id="sexoF" value="F">
+                                            <label class="form-check-label" for="sexoF">Feminino</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="bolsaFamilia">
+                                        <label class="form-check-label" for="bolsaFamilia">Beneficiário do Bolsa Família</label>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="observacoes" class="form-label">Observações (opcional)</label>
+                                        <textarea class="form-control" id="observacoes" rows="3"></textarea>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-primary" id="nextStep1">Próximo <i class="fas fa-arrow-right"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Etapa 2: Endereço e Geolocalização -->
+                                <div class="step d-none" id="step2">
+                                    <h5 class="mb-3">Endereço e Localização</h5>
+                                    
+                                    <div class="mb-3">
+                                        <label for="endereco" class="form-label">Endereço Completo</label>
+                                        <input type="text" class="form-control" id="endereco" placeholder="Rua, número, bairro" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="cep" class="form-label">CEP</label>
+                                        <input type="text" class="form-control" id="cep" placeholder="00000-000" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-outline-secondary" id="localizarBtn">
+                                            <i class="fas fa-map-marker-alt"></i> Localizar no Mapa
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="mb-3 d-none" id="mapContainer">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> O mapa seria exibido aqui, mostrando a localização e calculando a distância até os CMEIs.
+                                        </div>
+                                        <input type="hidden" id="geolocalizacao">
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-secondary" id="prevStep2"><i class="fas fa-arrow-left"></i> Anterior</button>
+                                        <button type="button" class="btn btn-primary" id="nextStep2">Próximo <i class="fas fa-arrow-right"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Etapa 3: Seleção de CMEI -->
+                                <div class="step d-none" id="step3">
+                                    <h5 class="mb-3">Seleção de CMEI</h5>
+                                    
+                                    <div class="mb-3">
+                                        <label for="cmeiSelect" class="form-label">Selecione o CMEI desejado</label>
+                                        <select class="form-select" id="cmeiSelect" required>
+                                            <option value="" selected disabled>Carregando CMEIs...</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3 d-none" id="distanciaInfo">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-ruler"></i> Distância calculada: <span id="distanciaValor">0</span> km
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="observacoesCmei" class="form-label">Observações sobre a escolha (opcional)</label>
+                                        <textarea class="form-control" id="observacoesCmei" rows="3"></textarea>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-secondary" id="prevStep3"><i class="fas fa-arrow-left"></i> Anterior</button>
+                                        <button type="submit" class="btn btn-success" id="submitInscricao"><i class="fas fa-check-circle"></i> Finalizar Inscrição</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Minhas Inscrições -->
+        <div class="row mb-4 d-none" id="minhasInscricoesSection">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list"></i> Minhas Inscrições</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Criança</th>
+                                        <th>CMEI</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inscricoesTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center">Carregando inscrições...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="d-none" id="semInscricoes">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Você ainda não possui inscrições.
+                            </div>
+                            <button class="btn btn-primary" id="semInscricoesNovaBtn">
+                                <i class="fas fa-plus-circle"></i> Criar Nova Inscrição
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Detalhes da Inscrição -->
+        <div class="row mb-4 d-none" id="detalhesInscricaoSection">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-info-circle"></i> Detalhes da Inscrição</h5>
+                        <button class="btn btn-sm btn-outline-secondary" id="voltarListaBtn">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="detalhesInscricaoContent">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Dados da Criança</h6>
+                                    <ul class="list-group mb-3">
+                                        <li class="list-group-item"><strong>Nome:</strong> <span id="detNomeCrianca"></span></li>
+                                        <li class="list-group-item"><strong>Data de Nascimento:</strong> <span id="detDataNascimento"></span></li>
+                                        <li class="list-group-item"><strong>Sexo:</strong> <span id="detSexo"></span></li>
+                                        <li class="list-group-item"><strong>Bolsa Família:</strong> <span id="detBolsaFamilia"></span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Dados da Inscrição</h6>
+                                    <ul class="list-group mb-3">
+                                        <li class="list-group-item"><strong>CMEI:</strong> <span id="detCmei"></span></li>
+                                        <li class="list-group-item"><strong>Data de Inscrição:</strong> <span id="detDataInscricao"></span></li>
+                                        <li class="list-group-item"><strong>Status:</strong> <span id="detStatus"></span></li>
+                                        <li class="list-group-item"><strong>Distância:</strong> <span id="detDistancia"></span> km</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>Observações</h6>
+                                    <div class="card">
+                                        <div class="card-body" id="detObservacoes">
+                                            Sem observações.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">
+                    Tem certeza que deseja realizar esta ação?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalBtn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/responsavel.js"></script>
+</body>
+</html>
