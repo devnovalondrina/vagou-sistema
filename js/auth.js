@@ -139,9 +139,21 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleLogin(e) {
     e.preventDefault();
     
+    // Obter elementos do formulário
+    const cpfInput = document.getElementById('loginCpf');
+    const passwordInput = document.getElementById('loginPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    // Verificar se os elementos existem
+    if (!cpfInput || !passwordInput || !loginBtn) {
+        console.error('Elementos do formulário de login não encontrados');
+        alert('Erro ao processar o formulário. Por favor, recarregue a página.');
+        return;
+    }
+    
     // Obter dados do formulário
-    const cpf = document.getElementById('loginCpf').value.replace(/\D/g, '');
-    const password = document.getElementById('loginPassword').value;
+    const cpf = cpfInput.value.replace(/\D/g, '');
+    const password = passwordInput.value;
     
     // Validar campos
     if (!cpf || !password) {
@@ -150,7 +162,6 @@ async function handleLogin(e) {
     }
     
     // Mostrar loading
-    const loginBtn = document.getElementById('loginBtn');
     const originalText = loginBtn.innerHTML;
     loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
     loginBtn.disabled = true;
@@ -206,13 +217,29 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
     
+    // Obter elementos do formulário
+    const nameInput = document.getElementById('registerName');
+    const cpfInput = document.getElementById('registerCpf');
+    const phoneInput = document.getElementById('registerPhone');
+    const emailInput = document.getElementById('registerEmail');
+    const passwordInput = document.getElementById('registerPassword');
+    const confirmPasswordInput = document.getElementById('registerConfirmPassword');
+    const registerBtn = document.getElementById('registerBtn');
+    
+    // Verificar se os elementos existem
+    if (!nameInput || !cpfInput || !phoneInput || !passwordInput || !confirmPasswordInput || !registerBtn) {
+        console.error('Elementos do formulário de cadastro não encontrados');
+        alert('Erro ao processar o formulário. Por favor, recarregue a página.');
+        return;
+    }
+    
     // Obter dados do formulário
-    const name = document.getElementById('registerName').value;
-    const cpf = document.getElementById('registerCpf').value.replace(/\D/g, '');
-    const phone = document.getElementById('registerPhone').value;
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    const name = nameInput.value;
+    const cpf = cpfInput.value.replace(/\D/g, '');
+    const phone = phoneInput.value;
+    const email = emailInput ? emailInput.value : '';
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
     
     // Validar campos
     if (!name || !cpf || !phone || !password || !confirmPassword) {
@@ -226,7 +253,6 @@ async function handleRegister(e) {
     }
     
     // Mostrar loading
-    const registerBtn = document.getElementById('registerBtn');
     const originalText = registerBtn.innerHTML;
     registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cadastrando...';
     registerBtn.disabled = true;
@@ -249,11 +275,19 @@ async function handleRegister(e) {
                 alert('Cadastro realizado com sucesso! Faça login para continuar.');
                 
                 // Mostrar formulário de login
-                document.getElementById('registerContainer').classList.add('d-none');
-                document.getElementById('loginContainer').classList.remove('d-none');
+                const loginContainer = document.getElementById('loginContainer');
+                const registerContainer = document.getElementById('registerContainer');
+                
+                if (loginContainer && registerContainer) {
+                    registerContainer.classList.add('d-none');
+                    loginContainer.classList.remove('d-none');
+                }
                 
                 // Limpar formulário
-                document.getElementById('registerForm').reset();
+                const registerForm = document.getElementById('registerForm');
+                if (registerForm) {
+                    registerForm.reset();
+                }
             } else {
                 alert(result.message || 'Erro ao fazer cadastro. Tente novamente.');
             }
