@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Estamos na página de login");
         
         // Configurar formulário de login
-        const loginForm = document.getElementById('loginForm');
+        const loginForm = document.querySelector('#loginForm');
         console.log("Formulário de login:", loginForm);
         
         if (loginForm) {
@@ -104,18 +104,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 console.log("Formulário de login enviado");
                 
-                // Obter dados do formulário
-                const cpfInput = document.getElementById('loginCpf');
-                const passwordInput = document.getElementById('loginPassword');
+                // Obter dados do formulário diretamente do formulário
+                const formData = new FormData(loginForm);
+                const cpf = formData.get('cpf')?.replace(/\D/g, '') || '';
+                const password = formData.get('senha') || '';
                 
-                if (!cpfInput || !passwordInput) {
-                    console.error("Elementos do formulário não encontrados");
-                    alert("Erro ao processar o formulário. Verifique o console para mais detalhes.");
-                    return;
-                }
-                
-                const cpf = cpfInput.value.replace(/\D/g, '');
-                const password = passwordInput.value;
+                console.log("CPF:", cpf);
+                console.log("Senha:", password);
                 
                 // Validar campos
                 if (!cpf || !password) {
@@ -124,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Mostrar loading
-                const loginBtn = document.getElementById('loginBtn');
+                const loginBtn = loginForm.querySelector('button[type="submit"]');
                 if (loginBtn) {
                     const originalText = loginBtn.innerHTML;
                     loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
@@ -174,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Configurar formulário de cadastro
-        const registerForm = document.getElementById('registerForm');
+        const registerForm = document.querySelector('#registerForm');
         console.log("Formulário de cadastro:", registerForm);
         
         if (registerForm) {
@@ -182,26 +177,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 console.log("Formulário de cadastro enviado");
                 
-                // Obter dados do formulário
-                const nameInput = document.getElementById('registerName');
-                const cpfInput = document.getElementById('registerCpf');
-                const phoneInput = document.getElementById('registerPhone');
-                const emailInput = document.getElementById('registerEmail');
-                const passwordInput = document.getElementById('registerPassword');
-                const confirmPasswordInput = document.getElementById('registerConfirmPassword');
+                // Obter dados do formulário diretamente do formulário
+                const formData = new FormData(registerForm);
+                const name = formData.get('nome') || '';
+                const cpf = formData.get('cpf')?.replace(/\D/g, '') || '';
+                const phone = formData.get('telefone') || '';
+                const email = formData.get('email') || '';
+                const password = formData.get('senha') || '';
+                const confirmPassword = formData.get('confirmarSenha') || '';
                 
-                if (!nameInput || !cpfInput || !phoneInput || !passwordInput || !confirmPasswordInput) {
-                    console.error("Elementos do formulário não encontrados");
-                    alert("Erro ao processar o formulário. Verifique o console para mais detalhes.");
-                    return;
-                }
-                
-                const name = nameInput.value;
-                const cpf = cpfInput.value.replace(/\D/g, '');
-                const phone = phoneInput.value;
-                const email = emailInput ? emailInput.value : '';
-                const password = passwordInput.value;
-                const confirmPassword = confirmPasswordInput.value;
+                console.log("Nome:", name);
+                console.log("CPF:", cpf);
+                console.log("Telefone:", phone);
+                console.log("Email:", email);
                 
                 // Validar campos
                 if (!name || !cpf || !phone || !password || !confirmPassword) {
@@ -215,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Mostrar loading
-                const registerBtn = document.getElementById('registerBtn');
+                const registerBtn = registerForm.querySelector('button[type="submit"]');
                 if (registerBtn) {
                     const originalText = registerBtn.innerHTML;
                     registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cadastrando...';
