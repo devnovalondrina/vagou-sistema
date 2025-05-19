@@ -1,82 +1,139 @@
 // Arquivo de autenticação e gerenciamento de usuários
 
-// Variáveis globais
-const API_URL = "https://script.google.com/macros/s/AKfycbwPJk8gyC3WNXfU8k7XiPqsZ6cEJlpuY7vnTsRkttDTkwGO9UsetmmQ5tISQyLUkhNlrA/exec"; // Será preenchido com a URL do Apps Script publicado
-const TOKEN_KEY = "vagou_token";
-const USER_DATA_KEY = "vagou_user";
+// URL da API (Google Apps Script)
+const API_URL = "https://script.google.com/macros/s/AKfycbwPJk8gyC3WNXfU8k7XiPqsZ6cEJlpuY7vnTsRkttDTkwGO9UsetmmQ5tISQyLUkhNlrA/exec";
+// Proxy CORS para contornar problemas de CORS
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
-// Função para inicializar a página de login
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se já existe um token válido
-    const token = localStorage.getItem(TOKEN_KEY);
-    const userData = JSON.parse(localStorage.getItem(USER_DATA_KEY) || "{}");
-    
-    if (token && userData.tipo) {
-        // Redirecionar para o painel apropriado
-        redirectToDashboard(userData.tipo);
-        return;
-    }
-    
-    // Configurar eventos do formulário de login
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-    
-    // Configurar evento para mostrar/ocultar senha
-    const togglePassword = document.getElementById('togglePassword');
-    if (togglePassword) {
-        togglePassword.addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                this.innerHTML = '<i class="fa fa-eye-slash"></i>';
+// Objeto para gerenciar autenticação
+const auth = {
+    // Verificar se o usuário está autenticado
+    checkAuth: function( ) {
+        const userData = localStorage.getItem('userData');
+        const token = localStorage.getItem('token');
+        
+        if (!userData || !token) {
+            // Se não estiver na página de login, redirecionar
+            if (!window.location.href.includes('index.html') && !window.location.href.endsWith('/')) {
+                window.location.href = '../index.html';
+            }
+            return null;
+        }
+        
+        try {
+            // Verificar se os dados são válidos
+            const user = JSON.parse(userData);
+            
+            // Verificar tipo de usuário e redirecionar para a página correta se necessário
+            const currentPage = window.location.pathname.split('/').pop();
+            
+            if (currentPage === 'index.html' || window.location.pathname.endsWith('/')) {
+                // Redirecionar para a página correta com base no tipo de usuário
+                switch (user.tipo) {
+                    case 'admin':
+                        window.location.href = 'pages/admin.html';
+                        break;
+                    case 'gestor':
+                        window.location.href = 'pages/gestor.html';
+                        break;
+                    case 'responsavel':
+                        window.location.href = 'pages/responsavel.html';
+                        break;
+                }
+                return null;
             } else {
-                passwordInput.type = 'password';
-                this.innerHTML = '<i class="fa fa-eye"></i>';
-            }
-        });
-    }
-    
-    // Configurar evento para abrir modal de cadastro
-    const registerLink = document.getElementById('registerLink');
-    if (registerLink) {
-        registerLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
-            registerModal.show();
-        });
-    }
-    
-    // Configurar evento para o botão de cadastro
-    const submitRegister = document.getElementById('submitRegister');
-    if (submitRegister) {
-        submitRegister.addEventListener('click', handleRegister);
-    }
-    
-    // Configurar máscaras para CPF e telefone
-    const cpfInputs = document.querySelectorAll('#cpf, #regCpf');
-    cpfInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '').substring(0, 11);
-        });
-    });
-    
-    const phoneInput = document.getElementById('regPhone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function() {
-            let value = this.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.substring(0, 11);
-            
-            if (value.length > 2) {
-                value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
-            }
-            if (value.length > 10) {
-                value = value.substring(0, 10) + '-' + value.substring(10);
+                // Verificar se o usuário está na página correta
+                const isAdminPage = currentPage === 'admin.html';
+                const isGestorPage = currentPage === 'gestor.html';
+                const isResponsavelPage = currentPage === 'responsavel.html';
+                
+                if ((isAdminPage && user.tipo !== 'admin') ||
+                    (isGestorPage && user.tipo !== 'gestor') ||
+                    (isResponsavelPage && user.tipo !== 'responsavel')) {
+                    // Redirecionar para a página correta
+                    switch (user.tipo) {
+                        case 'admin':
+                            window.location.href = 'admin.html';
+                            break;
+                        case 'gestor':
+                            window.location.href = 'gestor.html';
+                            break;
+                        case 'responsavel':
+                            window.location.href = 'responsavel.html';
+                            break;
+                    }
+                    return null;
+                }
             }
             
-            this.value = value;
-        });
+            return user;
+        } catch (error) {
+            console.error('Erro ao verificar autenticação:', error);
+            this.logout();
+            return null;
+        }
+    },
+    
+    // Obter token de autenticação
+    getAuthToken: function() {
+        return localStorage.getItem('token');
+    },
+    
+    // Fazer logout
+    logout: function() {
+        localStorage.removeItem('userData');
+        localStorage.removeItem('token');
+        window.location.href = window.location.href.includes('/pages/') ? '../index.html' : 'index.html';
+    }
+};
+
+// Configurar eventos quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se estamos na página de login
+    const isLoginPage = window.location.href.includes('index.html') || window.location.pathname.endsWith('/');
+    
+    if (isLoginPage) {
+        // Configurar formulário de login
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+        }
+        
+        // Configurar formulário de cadastro
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
+        }
+        
+        // Configurar botões de alternância entre login e cadastro
+        const showRegisterBtn = document.getElementById('showRegisterBtn');
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        
+        if (showRegisterBtn) {
+            showRegisterBtn.addEventListener('click', function() {
+                document.getElementById('loginContainer').classList.add('d-none');
+                document.getElementById('registerContainer').classList.remove('d-none');
+            });
+        }
+        
+        if (showLoginBtn) {
+            showLoginBtn.addEventListener('click', function() {
+                document.getElementById('registerContainer').classList.add('d-none');
+                document.getElementById('loginContainer').classList.remove('d-none');
+            });
+        }
+    } else {
+        // Configurar botão de logout em outras páginas
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function() {
+                auth.logout();
+            });
+        }
+        
+        // Verificar autenticação
+        const userData = auth.checkAuth();
+        if (!userData) return;
     }
 });
 
@@ -84,205 +141,153 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleLogin(e) {
     e.preventDefault();
     
-    const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
-    const password = document.getElementById('password').value;
-    const errorElement = document.getElementById('loginError');
+    // Obter dados do formulário
+    const cpf = document.getElementById('loginCpf').value.replace(/\D/g, '');
+    const password = document.getElementById('loginPassword').value;
     
     // Validar campos
-    if (!cpf || cpf.length !== 11) {
-        showError(errorElement, 'CPF inválido. Digite os 11 dígitos.');
+    if (!cpf || !password) {
+        alert('Por favor, preencha todos os campos.');
         return;
     }
     
-    if (!password) {
-        showError(errorElement, 'Digite sua senha.');
-        return;
-    }
-    
-    // Mostrar indicador de carregamento
-    const submitButton = e.target.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aguarde...';
+    // Mostrar loading
+    const loginBtn = document.getElementById('loginBtn');
+    const originalText = loginBtn.innerHTML;
+    loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
+    loginBtn.disabled = true;
     
     try {
-        // Fazer requisição para a API
-        const response = await fetch(API_URL, {
+        // Preparar dados para envio
+        const data = {
+            action: 'login',
+            cpf: cpf,
+            password: password
+        };
+        
+        // Fazer requisição para a API usando o proxy CORS
+        const response = await fetch(CORS_PROXY + API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
             },
-            body: JSON.stringify({
-                action: 'login',
-                cpf: cpf,
-                password: password
-            })
+            body: JSON.stringify(data)
         });
         
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            // Salvar token e dados do usuário
-            localStorage.setItem(TOKEN_KEY, data.token);
-            localStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
+        if (result.success) {
+            // Salvar dados do usuário e token
+            localStorage.setItem('userData', JSON.stringify(result.user));
+            localStorage.setItem('token', result.token);
             
-            // Redirecionar para o painel apropriado
-            redirectToDashboard(data.user.tipo);
+            // Redirecionar para a página correta
+            switch (result.user.tipo) {
+                case 'admin':
+                    window.location.href = 'pages/admin.html';
+                    break;
+                case 'gestor':
+                    window.location.href = 'pages/gestor.html';
+                    break;
+                case 'responsavel':
+                    window.location.href = 'pages/responsavel.html';
+                    break;
+                default:
+                    window.location.href = 'pages/responsavel.html';
+            }
         } else {
-            showError(errorElement, data.message || 'Erro ao fazer login. Verifique suas credenciais.');
+            alert(result.message || 'Erro ao fazer login. Tente novamente.');
+            
+            // Restaurar botão
+            loginBtn.innerHTML = originalText;
+            loginBtn.disabled = false;
         }
     } catch (error) {
         console.error('Erro ao fazer login:', error);
-        showError(errorElement, 'Erro de conexão. Tente novamente mais tarde.');
-    } finally {
+        alert('Erro de conexão. Tente novamente mais tarde.');
+        
         // Restaurar botão
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
+        loginBtn.innerHTML = originalText;
+        loginBtn.disabled = false;
     }
 }
 
 // Função para lidar com o cadastro
-async function handleRegister() {
-    const name = document.getElementById('regName').value.trim();
-    const cpf = document.getElementById('regCpf').value.replace(/\D/g, '');
-    const phone = document.getElementById('regPhone').value.replace(/\D/g, '');
-    const password = document.getElementById('regPassword').value;
-    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
-    const errorElement = document.getElementById('registerError');
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    // Obter dados do formulário
+    const name = document.getElementById('registerName').value;
+    const cpf = document.getElementById('registerCpf').value.replace(/\D/g, '');
+    const phone = document.getElementById('registerPhone').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
     
     // Validar campos
-    if (!name) {
-        showError(errorElement, 'Digite seu nome completo.');
+    if (!name || !cpf || !phone || !password || !confirmPassword) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
         return;
     }
     
-    if (!cpf || cpf.length !== 11) {
-        showError(errorElement, 'CPF inválido. Digite os 11 dígitos.');
+    if (password !== confirmPassword) {
+        alert('As senhas não coincidem.');
         return;
     }
     
-    if (!phone || phone.length < 10) {
-        showError(errorElement, 'Telefone inválido.');
-        return;
-    }
-    
-    if (!password) {
-        showError(errorElement, 'Digite uma senha.');
-        return;
-    }
-    
-    if (password !== passwordConfirm) {
-        showError(errorElement, 'As senhas não coincidem.');
-        return;
-    }
-    
-    // Mostrar indicador de carregamento
-    const submitButton = document.getElementById('submitRegister');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aguarde...';
+    // Mostrar loading
+    const registerBtn = document.getElementById('registerBtn');
+    const originalText = registerBtn.innerHTML;
+    registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cadastrando...';
+    registerBtn.disabled = true;
     
     try {
-        // Fazer requisição para a API
-        const response = await fetch(API_URL, {
+        // Preparar dados para envio
+        const data = {
+            action: 'register',
+            name: name,
+            cpf: cpf,
+            phone: phone,
+            email: email,
+            password: password,
+            tipo: 'responsavel' // Por padrão, novos usuários são responsáveis
+        };
+        
+        // Fazer requisição para a API usando o proxy CORS
+        const response = await fetch(CORS_PROXY + API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
             },
-            body: JSON.stringify({
-                action: 'register',
-                name: name,
-                cpf: cpf,
-                phone: phone,
-                password: password,
-                tipo: 'responsavel' // Tipo padrão para novos cadastros
-            })
+            body: JSON.stringify(data)
         });
         
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            // Fechar modal
-            const registerModal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
-            registerModal.hide();
-            
-            // Mostrar mensagem de sucesso
+        if (result.success) {
             alert('Cadastro realizado com sucesso! Faça login para continuar.');
             
-            // Preencher o campo de CPF no formulário de login
-            document.getElementById('cpf').value = cpf;
-            document.getElementById('password').focus();
+            // Mostrar formulário de login
+            document.getElementById('registerContainer').classList.add('d-none');
+            document.getElementById('loginContainer').classList.remove('d-none');
+            
+            // Limpar formulário
+            document.getElementById('registerForm').reset();
         } else {
-            showError(errorElement, data.message || 'Erro ao fazer cadastro.');
+            alert(result.message || 'Erro ao fazer cadastro. Tente novamente.');
         }
+        
+        // Restaurar botão
+        registerBtn.innerHTML = originalText;
+        registerBtn.disabled = false;
     } catch (error) {
         console.error('Erro ao fazer cadastro:', error);
-        showError(errorElement, 'Erro de conexão. Tente novamente mais tarde.');
-    } finally {
+        alert('Erro de conexão. Tente novamente mais tarde.');
+        
         // Restaurar botão
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
+        registerBtn.innerHTML = originalText;
+        registerBtn.disabled = false;
     }
 }
-
-// Função para redirecionar para o painel apropriado
-function redirectToDashboard(userType) {
-    switch (userType) {
-        case 'admin':
-            window.location.href = 'pages/admin.html';
-            break;
-        case 'gestor':
-            window.location.href = 'pages/gestor.html';
-            break;
-        case 'responsavel':
-            window.location.href = 'pages/responsavel.html';
-            break;
-        default:
-            // Tipo desconhecido, fazer logout
-            logout();
-    }
-}
-
-// Função para fazer logout
-function logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_DATA_KEY);
-    window.location.href = '../index.html';
-}
-
-// Função para mostrar mensagem de erro
-function showError(element, message) {
-    element.textContent = message;
-    element.classList.remove('d-none');
-    
-    // Esconder a mensagem após 5 segundos
-    setTimeout(() => {
-        element.classList.add('d-none');
-    }, 5000);
-}
-
-// Função para verificar autenticação (usada em todas as páginas protegidas)
-function checkAuth() {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const userData = JSON.parse(localStorage.getItem(USER_DATA_KEY) || "{}");
-    
-    if (!token || !userData.tipo) {
-        // Redirecionar para a página de login
-        window.location.href = '../index.html';
-        return null;
-    }
-    
-    return userData;
-}
-
-// Função para obter o token de autenticação
-function getAuthToken() {
-    return localStorage.getItem(TOKEN_KEY);
-}
-
-// Exportar funções para uso em outros arquivos
-window.auth = {
-    logout,
-    checkAuth,
-    getAuthToken
-};
